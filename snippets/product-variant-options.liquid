@@ -45,7 +45,8 @@
     endfor
   -%}
 
-  {%- if block.settings.picker_type == 'button' -%}
+  {% comment %} Remove initial type "button", to utilize both button and dropdown selector {% endcomment %}
+  {% unless option.name == "Size"%}
     <input
       type="radio"
       id="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}"
@@ -59,16 +60,26 @@
         class="disabled"
       {% endif %}
     >
-    <label for="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}">
-      {{ value -}}
-      <span class="visually-hidden">{{ 'products.product.variant_sold_out_or_unavailable' | t }}</span>
-    </label>
-  {%- elsif block.settings.picker_type == 'dropdown' -%}
+
+      {% comment %} Render swatches for variant option named Color. Used metafields to reference image link, to utilize by <img> {% endcomment %}
+      {% if option.name == "Color" %}
+        {% if product.variants[forloop.index0].metafields.image_swatch.link%}
+          <label style="background-color: {{ value }}" for="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}">
+            <img src="{{ product.variants[forloop.index0].metafields.image_swatch.link}}" alt="Image Swatch" Style="width: 60px; height: 60px;">
+          </label>
+        {% endif %}
+        
+        {% else %}
+        <label style="background-color: {{ value }}" for="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}">
+          {{ value }}
+        </label>
+      {% endif %} 
+
+    {% endunless %}
+
+    {% unless option.name == "Color" %}
     <option
-      value="{{ value | escape }}"
-      {% if option.selected_value == value %}
-        selected="selected"
-      {% endif %}
+      value="{{ value | escape }}" {% comment %} initial select on valid variant {% endcomment %}
     >
       {% if option_disabled -%}
         {{- 'products.product.value_unavailable' | t: option_value: value -}}
@@ -76,5 +87,8 @@
         {{- value -}}
       {%- endif %}
     </option>
-  {%- endif -%}
+    
+
+  {% endunless %}
+
 {%- endfor -%}

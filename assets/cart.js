@@ -12,6 +12,34 @@ class CartRemoveButton extends HTMLElement {
 
 customElements.define('cart-remove-button', CartRemoveButton);
 
+const removeFreebieIfHandbagRemoved = async () => {
+  // Fetching the current cart data
+  const cartResponse = await fetch('/cart.js');
+  const cartData = await cartResponse.json();
+
+  // Creating data to remove the freebie if it exists without the main product
+  const formDataToRemoveFreebie = new FormData();
+  const freebieProductId = 46758489784628;
+  formDataToRemoveFreebie.append('id', freebieProductId);
+  formDataToRemoveFreebie.append('quantity', '0');
+
+  // Checking if the main product exists in the cart
+  const mainProductExistsInCart = cartData.items.some(item => item.variant_id == '46666695606580');
+
+  if (!mainProductExistsInCart) {
+    // If the main product is not in the cart, check if the freebie product exists
+    const freebieProductExistsInCart = cartData.items.some(item => item.variant_id == '46758489784628');
+    if (freebieProductExistsInCart) {
+      // If the freebie product exists without the main product, remove it from the cart
+      await fetch('/cart/change.js', {
+        method: 'POST',
+        body: formDataToRemoveFreebie
+      });
+      window.location.reload();
+    }
+  }
+}
+
 class CartItems extends HTMLElement {
   constructor() {
     super();
@@ -119,6 +147,12 @@ class CartItems extends HTMLElement {
       })
       .then((state) => {
         const parsedState = JSON.parse(state);
+
+
+        //function call every cart update
+        removeFreebieIfHandbagRemoved();
+
+
         const quantityElement =
           document.getElementById(`Quantity-${line}`) || document.getElementById(`Drawer-quantity-${line}`);
         const items = document.querySelectorAll('.cart-item');

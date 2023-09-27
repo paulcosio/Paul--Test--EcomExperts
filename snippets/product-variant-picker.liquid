@@ -10,7 +10,14 @@
   {% render 'product-variant-picker', product: product, block: block, product_form_id: product_form_id %}
 {% endcomment %}
 {%- unless product.has_only_default_variant -%}
-  {%- if block.settings.picker_type == 'button' -%}
+  {% comment %} Removed if Button condition since to utilize both button and dropdown {% endcomment %}
+
+  {% comment %} Added control browser cache to set back pickers to first option {% endcomment %}
+  <meta http-equiv="cache-control" content="no-store, no-cache, must-revalidate">
+  <meta http-equiv="pragma" content="no-cache">
+  <meta http-equiv="expires" content="0">
+  
+
     <variant-radios
       id="variant-radios-{{ section.id }}"
       class="no-js-hidden"
@@ -22,16 +29,19 @@
       {{ block.shopify_attributes }}
     >
       {%- for option in product.options_with_values -%}
-        <fieldset class="js product-form__input">
-          <legend class="form__label">{{ option.name }}</legend>
-          {% render 'product-variant-options', product: product, option: option, block: block %}
-        </fieldset>
+        {% unless option.name == "Size" %}
+          <fieldset class="js product-form__input">
+            <legend class="form__label">{{ option.name }}</legend>
+            {% render 'product-variant-options', product: product, option: option, block: block %}
+          </fieldset>
+        {% endunless %}
       {%- endfor -%}
       <script type="application/json">
         {{ product.variants | json }}
       </script>
     </variant-radios>
-  {%- else -%}
+
+
     <variant-selects
       id="variant-selects-{{ section.id }}"
       class="no-js-hidden"
@@ -43,29 +53,47 @@
       {{ block.shopify_attributes }}
     >
       {%- for option in product.options_with_values -%}
-        <div class="product-form__input product-form__input--dropdown">
-          <label class="form__label" for="Option-{{ section.id }}-{{ forloop.index0 }}">
-            {{ option.name }}
-          </label>
-          <div class="select">
-            <select
-              id="Option-{{ section.id }}-{{ forloop.index0 }}"
-              class="select__select"
-              name="options[{{ option.name | escape }}]"
-              form="{{ product_form_id }}"
-            >
-              {% render 'product-variant-options', product: product, option: option, block: block %}
-            </select>
-            {% render 'icon-caret' %}
+
+        {% unless option.name == "Color" %}
+
+          <div class="product-form__input product-form__input--dropdown">
+
+            <label class="form__label" for="Option-{{ section.id }}-{{ forloop.index0 }}">
+              {{ option.name }}
+            </label>
+
+            <div class="select">
+              <select
+                id="Option-{{ section.id }}-{{ forloop.index0 }}"
+                class="select__select"
+                name="options[{{ option.name | escape }}]"
+                form="{{ product_form_id }}"
+              >
+                <option selected="selected" value=""> Unselected </option>
+                {% render 'product-variant-options', product: product, option: option, block: block %}
+              </select>
+              {% render 'icon-caret' %}
+            </div>            
           </div>
-        </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var selectElement = document.getElementById("Option-{{ section.id }}-{{ forloop.index0 }}");
+    selectElement.value = "";
+    if(selectElement.value == ""){
+      const addToCart_disable = document.getElementById('ProductSubmitButton-template--21261766951220__main');
+      addToCart_disable.setAttribute('disabled', '');
+    }
+  });
+</script>
+        {% endunless %}
+
       {%- endfor -%}
 
       <script type="application/json">
         {{ product.variants | json }}
       </script>
     </variant-selects>
-  {%- endif -%}
+  
 {%- endunless -%}
 
 <noscript class="product-form__noscript-wrapper-{{ section.id }}">
