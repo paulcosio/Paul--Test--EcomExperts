@@ -965,6 +965,7 @@ class VariantSelects extends HTMLElement {
     this.updatePickupAvailability();
     this.removeErrorMessage();
     this.updateVariantStatuses();
+    this.loadImage(); //call load image per variant function
 
     if (!this.currentVariant) {
       this.toggleAddButton(true, '', true);
@@ -977,10 +978,40 @@ class VariantSelects extends HTMLElement {
       this.updateShareUrl();
     }
   }
-
-  updateOptions() {
+  
+   updateOptions() {
     this.options = Array.from(this.querySelectorAll('select'), (select) => select.value);
+    const colorRadioButton = document.querySelector('input[name="Color"]:checked');
+    
+    const selectDropdown = document.querySelector('.select__select');
+    const productForm = document.getElementById(`product-form-${this.dataset.section}`);
+    const grayOutAddtoCart = productForm.querySelector('[name="add"]');
+    const grayOutBuyButton = productForm.querySelector('.product-form__buttons .shopify-payment-button button');
+
+    if (colorRadioButton !== null) {
+      this.options.unshift(colorRadioButton.value);
+    }
+
+    
+    if(colorRadioButton){
+      if(selectDropdown.value == ''){
+        grayOutAddtoCart.style.pointerEvents = 'none';
+        grayOutAddtoCart.style.opacity = '0.5';
+        grayOutBuyButton.style.pointerEvents = 'none';
+        grayOutBuyButton.style.opacity = '0.5';
+      }else{
+        grayOutAddtoCart.style.pointerEvents = 'all';
+        grayOutAddtoCart.style.opacity = '1';
+        grayOutBuyButton.style.pointerEvents = 'all';
+        grayOutBuyButton.style.opacity = '1';
+        
+      }
+    }else{
+      //
+    }
+    
   }
+  
 
   updateMasterId() {
     this.currentVariant = this.getVariantData().find((variant) => {
@@ -1044,6 +1075,21 @@ class VariantSelects extends HTMLElement {
       this.setInputAvailability(optionInputs, availableOptionInputsValue);
     });
   }
+
+  //Created a new function to render and block alternate existing images related to the current product
+loadImage() {
+  if (this.currentVariant.featured_image && this.currentVariant.featured_image.alt) {
+     //shows the images for the specific product variant that matches its (alt tag)
+    document.querySelectorAll('[thumbnail-alt]').forEach(img => img.style.display = 'none');
+    const currentImgAlt = this.currentVariant.featured_image.alt
+    const thumbnailSelector = `[thumbnail-alt = '${currentImgAlt}']`
+    document.querySelectorAll(thumbnailSelector).forEach(img => img.style.display = 'block');
+  }
+  else{
+    //showing all thumbnails regardless of selected variant
+    document.querySelectorAll('[thumbnail-alt]').forEach(img => img.style.display = 'block');
+  }
+}
 
   setInputAvailability(listOfOptions, listOfAvailableOptions) {
     listOfOptions.forEach((input) => {
@@ -1207,12 +1253,30 @@ class VariantRadios extends VariantSelects {
       }
     });
   }
-
+//updated this existing function to now handle inputs from multiple option selectors same as before
+// repeats the same functionality as the other updateOptions function above
+//just that this radio selector will now take the second required value to match variant from the select-box(drop-down)
   updateOptions() {
     const fieldsets = Array.from(this.querySelectorAll('fieldset'));
+    const selectField = document.querySelector('.select__select');
+    
     this.options = fieldsets.map((fieldset) => {
       return Array.from(fieldset.querySelectorAll('input')).find((radio) => radio.checked).value;
     });
+    if(selectField.value != ''){
+      this.options.push(selectField.value);
+    }else{
+      this.options.push('Small');
+    }
+    if(selectField.value ===  '') {
+      const addtocartForm=document.getElementById(`product-form-${this.dataset.section}`);
+    const disable_byClass = addtocartForm.querySelector('[name="add"]');
+    const disable_byClass2 = addtocartForm.querySelector('.product-form__buttons .shopify-payment-button button');
+      disable_byClass.style.pointerEvents = 'none';
+      disable_byClass.style.opacity = '0.5';
+      disable_byClass2.style.pointerEvents = 'none';
+      disable_byClass2.style.opacity = '0.4';
+    }
   }
 }
 
@@ -1257,3 +1321,25 @@ class ProductRecommendations extends HTMLElement {
 }
 
 customElements.define('product-recommendations', ProductRecommendations);
+
+// Check if the current URL matches the specific product variant URL
+if (window.location.href === 'https://paul-cosio-test.myshopify.com/products/dark-winter-jacket?variant=46758489784628') {
+  // Redirect to the cart page or the previous URL (you can customize this)
+  window.location.href = '/cart'; // Redirect to the cart page
+  // OR
+  // window.history.back(); // Redirect back to the previous URL
+}
+
+// Get all elements with the class "product__modal-opener"
+const modalOpeners = document.querySelectorAll('.product__modal-opener');
+
+// Loop through each modal opener
+modalOpeners.forEach(modalOpener => {
+  // Check if the modal opener contains an image with alt="hide"
+  const hasImageWithAltHide = Array.from(modalOpener.querySelectorAll('img')).some(image => image.getAttribute('alt') === 'hide');
+  
+  // If it contains such an image, hide the entire modal opener
+  if (hasImageWithAltHide) {
+    modalOpener.style.display = 'none';
+  }
+});

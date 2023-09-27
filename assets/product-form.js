@@ -1,4 +1,43 @@
 if (!customElements.get('product-form')) {
+  // new function to add the bundle product to cart when the main product (HandBag) with variant "Medium", "Black" is added to cart
+  function addFreeToCart() { 
+    const freeBundleProduct = 46758489784628;
+    const formData = new FormData();
+    formData.append('id', freeBundleProduct);
+  
+    // Fetching the cart to check if the product with bundle product already exists
+    fetch('/cart.js')
+      .then(response => response.json())
+      .then(cartData => {
+        const cartItems = cartData.items;
+        
+        // Check if the product with bundle product already exists in the cart
+        const productExists = cartItems.some(item => item.variant_id === freeBundleProduct);
+        
+        if (productExists) {
+          console.log('Product with variant ID', freeBundleProduct, 'already exists in the cart.');
+        } else {
+          //if Product doesn't exist in the cart, adding it
+          fetch('/cart/add.js', {
+            method: 'POST',
+            body: formData
+          })
+            .then(response => response.json())
+            .then(data => {
+              // Handle the response data as needed
+              console.log('Product added to cart:', data);
+            })
+            .catch(error => {
+              // Handle any errors that occurred during the request
+              console.error('Error adding product to cart:', error);
+            });
+        }
+      })
+      .catch(error => {
+        // Handle any errors that occurred while fetching the cart
+        console.error('Error fetching cart:', error);
+      });
+  }
   customElements.define(
     'product-form',
     class ProductForm extends HTMLElement {
@@ -16,6 +55,7 @@ if (!customElements.get('product-form')) {
         this.hideErrors = this.dataset.hideErrors === 'true';
       }
 
+      
       onSubmitHandler(evt) {
         evt.preventDefault();
         if (this.submitButton.getAttribute('aria-disabled') === 'true') return;
@@ -67,6 +107,14 @@ if (!customElements.get('product-form')) {
 
             if (!this.error)
               publish(PUB_SUB_EVENTS.cartUpdate, { source: 'product-form', productVariantId: formData.get('id'), cartData: response });
+              const productVariantId = formData.get('id');
+              //checking if the product that is being added to cart is out (HandBag) with variant "Medium", "Black" product or not
+               if (productVariantId === '46666695606580') {
+                //calling our product adding function if it is the product (HandBag) with variant "Medium", "Black"
+                addFreeToCart();
+              }else {
+                //
+              }
             this.error = false;
             const quickAddModal = this.closest('quick-add-modal');
             if (quickAddModal) {
