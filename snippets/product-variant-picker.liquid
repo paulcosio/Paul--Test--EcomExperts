@@ -75,16 +75,31 @@
               {% render 'icon-caret' %}
             </div>            
           </div>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    var selectElement = document.getElementById("Option-{{ section.id }}-{{ forloop.index0 }}");
-    selectElement.value = "";
-    if(selectElement.value == ""){
-      const addToCart_disable = document.getElementById('ProductSubmitButton-template--21261766951220__main');
-      addToCart_disable.setAttribute('disabled', '');
-    }
-  });
-</script>
+          <script>
+            function checkSelectValue() {
+              var selectElement = document.getElementById("Option-{{ section.id }}-{{ forloop.index0 }}");
+              selectElement.value = "";
+          
+              if (selectElement.value === "") {
+                const addToCart_disable = document.getElementById('ProductSubmitButton-template--21261766951220__main');
+                addToCart_disable.setAttribute('disabled', '');
+              }
+            }
+          
+            // Run the function on page load and when navigating back/forward
+            window.onload = checkSelectValue;
+            window.addEventListener('popstate', checkSelectValue);
+            document.addEventListener('DOMContentLoaded', checkSelectValue);
+          
+            // Add a beforeunload event listener
+            window.addEventListener('beforeunload', function (e) {
+              // Run your code before the page unloads
+              var selectElement = document.getElementById("Option-{{ section.id }}-{{ forloop.index0 }}");
+              selectElement.value = "";
+              
+            });
+          </script>
+                    
         {% endunless %}
 
       {%- endfor -%}
